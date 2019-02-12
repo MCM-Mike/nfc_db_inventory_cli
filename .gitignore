@@ -1,0 +1,4 @@
+# emacs temporary files
+*~
+# python's byte-code
+*.pyc
