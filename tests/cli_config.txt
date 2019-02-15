@@ -1,0 +1,14 @@
+# this line is a comment, ignored by cli.py during parsing
+menu: first
+-> Welcome to nfcdbi, what to do,
+-> on multiple lines:
+> wait a tag
+> backpack
+> tag info
+menu: second
+-> ahah an other menu
+> test
+> add to the database
+> nothing to do
+> exit
+
