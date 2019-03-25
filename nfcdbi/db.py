@@ -71,7 +71,7 @@ class MysqlDb:
         """ Execute the query on the db.cursor
         """
         try:
-            print "Executing: {0}".format(query)
+            # print "Executing: {0}".format(query)
             self.cursor.execute(query)
 
             if not fetch:

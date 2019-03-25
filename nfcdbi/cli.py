@@ -2,26 +2,26 @@
 
 """ CLI module to display menus
 
-Menu's texts are set in the CLI_CONFIG_FILE.
+Menu's texts are set in the given configuration file.
 """
 
 import sys
+import math
+import textwrap
 
 # need to add the path of config
-CLI_CONFIG_FILE = "cli_config.txt"
 MENU_KEYWORD = "menu"
 MENU_NO_NAME = "no_name"
 MENU_DESC_KEYWORD = "->"
 MENU_ITEM_KEYWORD = ">"
 
 
-def menus_get():
-    """ Retreive all menus in the CLI_CONFIG_FILE.
+def menus_get(cli_config_file):
+    """ Retreive all menus in the cli_config_file.
 
     @return: dictionary with all menus
     """
-    # try:
-    with open(CLI_CONFIG_FILE, 'r') as f:
+    with open(cli_config_file, 'r') as f:
         lines = f.readlines();
         in_menu = False
         menus = {}
@@ -50,8 +50,7 @@ def menus_get():
                 # not a menu line
                 menu_name = MENU_NO_NAME
         f.close()
-    # except:
-    #     print("1.. error catched");
+
     return menus
 
 def menu_display(menu):
@@ -59,7 +58,7 @@ def menu_display(menu):
 
     @menu_name: menu dictionary with `desc` and `choices` keys.
     """
-    print("<MENU: {title}>\n{desc}".format(
+    print("\n<MENU: {title}>\n{desc}".format(
         title = menu["name"],
         desc = menu["desc"]));
 
@@ -68,3 +67,31 @@ def menu_display(menu):
         print("\t{itemno}) {text}".format(
             itemno = i + 1,
             text = menu["choices"][i]))
+
+
+
+def print_battery_list(columns, data):
+    """
+    """
+
+    for d in data:
+        for i,x in enumerate(d):
+            col = columns[i]
+
+            if (col != "nfcid"):
+                print("{0: <20}: {1}".format(
+                    col,
+                    x))
+            else:
+                print("{0: <20}: \033[1;35m{1}\033[0m".format(
+                    col,
+                    x))
+        print "--"
+
+
+    # get longest wrap of 15 chars
+    # print([textwrap.wrap(text=w, width=15) for r in data for w in r[1]])
+    # longest_wrap = max(len())
+    #                    for r in data
+    #                    for w in r[1])
+

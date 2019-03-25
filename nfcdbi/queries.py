@@ -30,13 +30,17 @@ def create_battery_table(dbname):
 )  ENGINE=INNODB COMMENT="Table to monitor batteries";
     """.format(dbname)
 
+# Get table info
+def get_columns_name(dbname):
+    return "DESC `{0}`.`battery`;".format(dbname)
+
 # Insert a battery
 def insert_battery(dbname, nfcid, comment):
     return """
     INSERT INTO `{0}`.`battery`
     (`nfcid`, `comment`, `inserted_date`)
     VALUES
-    ("{1}", "{2}", "{3}");
+    ('{1}', '{2}', '{3}');
     """.format(dbname,
                nfcid,
                comment,
@@ -44,19 +48,19 @@ def insert_battery(dbname, nfcid, comment):
 
 # List batteries
 def list_batteries(dbname):
-    return "SELECT * FROM {0}.battery;".format(dbname)
+    return "SELECT * FROM `{0}`.`battery`;".format(dbname)
 
 
 # Select battery on given nfcid
 def get_battery_nfcid(dbname, nfcid):
     return """
-    SELECT * FROM {0}.battery WHERE (nfcid = "{1}");
+    SELECT * FROM `{0}`.`battery` WHERE (`nfcid` = '{1}');
     """.format(dbname, nfcid)
 
 # Remove battery on given nfcid
 def rm_battery_nfcid(dbname, nfcid):
     return """
-    DELETE FROM {0}.battery WHERE (nfcid = "{1}");
+    DELETE FROM `{0}`.`battery` WHERE (`nfcid` = '{1}');
     """.format(dbname, nfcid)
 
 # add battery to charging
