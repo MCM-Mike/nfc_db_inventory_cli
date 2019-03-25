@@ -28,6 +28,7 @@ class AcrDev:
         self.usb_dev = usb_dev
         self.usb_target = 'usb:{bus}:{dev}'.format(bus = self.usb_bus,
                                                    dev = self.usb_dev)
+        self.hw_connected = False
 
         self.rdwr_options = {
             'targets': ['106A'],        # type2tag, nfcA
@@ -53,9 +54,16 @@ class AcrDev:
         if clf.open('usb:{bus}:{dev}'.format(bus = self.usb_bus,
                                              dev = self.usb_dev)):
             print("dev {0} acquired successfully".format(self.usb_target))
+            self.hw_connected = True
             return True
 
+        print("dev {0} not found".format(self.usb_target))
         return False
+
+    def is_connected(self):
+        """ Return hardware connected state
+        """
+        return self.hw_connected
 
     def wait_for_tag(self):
         """ Wait RF modulation from detected tag
