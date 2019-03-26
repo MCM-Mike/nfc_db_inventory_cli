@@ -58,25 +58,27 @@ def menu_display(menu):
 
     @menu_name: menu dictionary with `desc` and `choices` keys.
     """
-    print("\n<MENU: {title}>\n{desc}".format(
+    print("\033[2;37m\n<MENU: {title}>\n{desc}\033[0m".format(
         title = menu["name"],
         desc = menu["desc"]));
 
     for i, c in enumerate(menu["choices"]):
         # +1 to avoid choice 0
-        print("\t{itemno}) {text}".format(
+        print("\033[2;37m\t{itemno}) {text}\033[0m".format(
             itemno = i + 1,
             text = menu["choices"][i]))
 
 
 
-def print_battery_list(columns, data):
+def print_battery_list(columns, data, print_total=False):
     """
     """
+    count = 0
 
-    for d in data:
-        for i,x in enumerate(d):
-            col = columns[i]
+    for i, d in enumerate(data):
+        count += 1
+        for j, x in enumerate(d):
+            col = columns[j]
 
             if (col != "nfcid"):
                 print("{0: <20}: {1}".format(
@@ -88,10 +90,5 @@ def print_battery_list(columns, data):
                     x))
         print "--"
 
-
-    # get longest wrap of 15 chars
-    # print([textwrap.wrap(text=w, width=15) for r in data for w in r[1]])
-    # longest_wrap = max(len())
-    #                    for r in data
-    #                    for w in r[1])
-
+    if print_total:
+        print "\nTotal # of registered batteries: \033[1;34m{0}\033[0m".format(count)
