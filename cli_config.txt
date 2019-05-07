@@ -1,9 +1,9 @@
 # Comment line: menus of the CLI client
 menu: principal
 -> Welcome to nfcdbi principal menu, what to do:
-> db explorer   (list batteries in the db)
-> battery info  (print database info of the next tag)
-> backpack      (next tag(s) are battery(ies) that you are going to use)
+> db explorer   (list items in the db)
+> item info     (print database info of the next tag)
+> backpack      (next tag(s) are item(s) that you are going to use)
 > charge        (next tag(s) are battery(ies) that you are going to charge)
 > register      (if the next tag is not in the databse, it will be inserted)
 > exit

@@ -62,6 +62,14 @@ class MysqlDb:
                 self.dbname)
             return None
 
+        # try to create drone db if it doesnt exists
+        res = self.execute(queries.create_drone_table(self.dbname))
+
+        if not res:
+            print "Error trying to create drone table for the database {0}".format(
+                self.dbname)
+            return None
+
 
     def __str__(self):
         """ String representation
@@ -131,12 +139,13 @@ class MysqlDb:
 
 
 # some prepares queries
-def check_if_battery_exists(db, nfcid):
-    """ Return True if the nfcid is associated to a battery
+def check_if_nfcid_exists(db, tname, nfcid):
+    """ Return True if the nfcid is associated to a drone or battery
     in the databse. False otherwise.
     """
-    res = db.execute(queries.get_battery_nfcid(db.dbname,
-                                               nfcid), True)
+    res = db.execute(queries.get_by_nfcid(db.dbname,
+                                          tname,
+                                          nfcid), True)
     if not res:
         return False
 
@@ -148,7 +157,21 @@ def get_battery_info(db, nfcid):
     of a battery. Return empty False if nfcid is unkown to the db.
     """
     res = db.execute(queries.get_battery_nfcid(db.dbname,
+                                               queries.BATTERY_TNAME,
                                                nfcid), True)
+    if not res:
+        return False
+
+    return (res[0][3], res[0][4], res[0][5])
+
+def get_drone_info(db, nfcid):
+    """ Return a tuple:
+    (# of use, last use date)
+    of a drone. Return empty False if nfcid is unkown to the db.
+    """
+    res = db.execute(queries.get_by_nfcid(db.dbname,
+                                          queries.DRONE_TNAME,
+                                          nfcid), True)
     if not res:
         return False
 

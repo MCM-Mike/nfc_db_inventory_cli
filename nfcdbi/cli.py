@@ -9,6 +9,8 @@ import sys
 import math
 import textwrap
 
+import queries as queries
+
 # need to add the path of config
 MENU_KEYWORD = "menu"
 MENU_NO_NAME = "no_name"
@@ -68,9 +70,10 @@ def menu_display(menu):
             itemno = i + 1,
             text = menu["choices"][i]))
 
-
-
-def print_battery_list(columns, data, print_total=False):
+def print_list(tname,
+               columns,
+               data,
+               print_total=False):
     """
     """
     count = 0
@@ -91,4 +94,22 @@ def print_battery_list(columns, data, print_total=False):
         print "--"
 
     if print_total:
-        print "\nTotal # of registered batteries: \033[1;34m{0}\033[0m".format(count)
+        print "\n# of registered NFCID ({0}): \033[1;34m{1}\033[0m\n".format(tname,
+                                                                           count)
+
+def print_tables(db,
+                 *tables):
+    """
+    """
+    for tname in tables:
+        res = db.execute(queries.table_list(db.dbname,
+                                            tname),
+                         True)
+        cols = db.execute(queries.table_columns_name(db.dbname,
+                                                     tname),
+                          True)
+
+        print_list(tname,
+                   [c[0] for c in cols],
+                   res,
+                   print_total=True)

@@ -49,35 +49,89 @@ def main(args):
             continue
 
         if (choice == 1):
-            # db list battery of print no battery registered if empty.
-            res = mydb.execute(queries.list_batteries(args.db_name), True)
-            cols = mydb.execute(queries.get_columns_name(args.db_name), True)
-
-            cli.print_battery_list([c[0] for c in cols],
-                                   res,
-                                   print_total=True)
+            cli.print_tables(mydb,
+                             queries.BATTERY_TNAME,
+                             queries.DRONE_TNAME);
 
         elif (choice == 2):
             # next tag get info in DB
             print "Wait for tag to get nfcid..."
             acr_dev.wait_for_tag();
+            tname = queries.BATTERY_TNAME
 
             # check if exists
             res = mydb.execute(
-                queries.get_battery_nfcid(mydb.dbname,
-                                          acr_dev.last_nfcid),
+                queries.get_by_nfcid(mydb.dbname,
+                                     queries.BATTERY_TNAME,
+                                     acr_dev.last_nfcid),
                 True)
 
             if res:
-                print "\nNFCID: \033[1;32m{0}\033[0m\n".format(acr_dev.last_nfcid)
+                print "\nNFCID: \033[1;32m{0}\033[0m (battery)\n".format(acr_dev.last_nfcid)
                 cols = mydb.execute(
-                    queries.get_columns_name(args.db_name),
+                    queries.table_columns_name(mydb.dbname,
+                                               queries.BATTERY_TNAME),
                     True)
 
-                cli.print_battery_list([c[0] for c in cols], res)
+                cli.print_list(queries.BATTERY_TNAME,
+                               [c[0] for c in cols],
+                               res)
             else:
-                print "\nNFCID: \033[1;31m{0}\033[0m\n".format(acr_dev.last_nfcid)
-                print "Unkown tag"
+                res = mydb.execute(
+                    queries.get_by_nfcid(mydb.dbname,
+                                         queries.DRONE_TNAME,
+                                         acr_dev.last_nfcid),
+                    True)
+
+                if res:
+                    print "\nNFCID: \033[1;32m{0}\033[0m (drone)\n".format(acr_dev.last_nfcid)
+                    tname = queries.DRONE_TNAME
+                    cols = mydb.execute(
+                        queries.table_columns_name(mydb.dbname,
+                                                   queries.DRONE_TNAME),
+                        True)
+                    cli.print_list(queries.DRONE_TNAME,
+                                   [c[0] for c in cols],
+                                   res)
+                else:
+                    print "\nNFCID: \033[1;31m{0}\033[0m\n".format(acr_dev.last_nfcid)
+                    print "Unknown tag"
+                    continue
+
+            # Operations on the current item (if exists)
+            while True:
+                print "Skip (Enter), Edit comment (1), Delete item (2) ?"
+                uchoice = raw_input()
+
+                if uchoice != "1" and uchoice != "2" and uchoice != "":
+                    print "\033[1;31m{0}: invalid choice, Enter, 1 or 2 expected\033[0m".format(uchoice)
+                    continue
+
+                if uchoice == "":
+                    break       # enter, skip the menu
+                elif uchoice == "1":
+                    print "\nEnter the new comment:"
+                    comment = raw_input()
+                    print tname;
+                    mydb.execute(
+                        queries.comment_edit(mydb.dbname,
+                                            tname,
+                                             acr_dev.last_nfcid,
+                                             comment)
+                    )
+                    print "\033[1;32mComment edited\033[0m\n"
+                else:
+                    print "\nAre you sure (Y/n)?"
+                    validation = raw_input()
+                    if validation == "" or validation == "y" or validation == "Y":
+                        mydb.execute(
+                            queries.rm_by_nfcid(mydb.dbname,
+                                                tname,
+                                                acr_dev.last_nfcid)
+                        )
+                        print "\033[1;32m{0} deleted from {1}\033[0m\n".format(acr_dev.last_nfcid, tname)
+                        break
+
 
         elif (choice == 3):
             # next tags are registered as used, and when user enters "end",
@@ -85,7 +139,7 @@ def main(args):
             insert = 0
             nfcids = set()
 
-            print "Scan the battery to be used:"
+            print "Scan the items to be used:"
 
             acr_dev.wait_for_tag();
             nfcids.add(acr_dev.last_nfcid)
@@ -100,20 +154,29 @@ def main(args):
 
                 if i:
                     if sys.stdin.readline().strip() == END_INPUT:
-                        print nfcids
+
                         for nfcid in nfcids:
-                            if not db.check_if_battery_exists(mydb,
-                                                              nfcid):
-                                print "\033[1;33m{0}\033[0m is not associated with a battery in the database. Skip.".format(
+                            res_b = db.check_if_nfcid_exists(mydb,
+                                                             queries.BATTERY_TNAME,
+                                                             nfcid)
+                            res_d = db.check_if_nfcid_exists(mydb,
+                                                             queries.DRONE_TNAME,
+                                                             nfcid)
+                            if not res_b and not res_d:
+                                print "\033[1;33m{0}\033[0m is not associated with a the database item. Skip.".format(
                                     nfcid)
                             else:
-                                res = mydb.execute(
-                                    queries.battery_use(mydb.dbname,
-                                                        nfcid))
+                                if res_b:
+                                    res = mydb.execute(
+                                        queries.battery_use(mydb.dbname,
+                                                            nfcid))
+                                else:                                                                        res = mydb.execute(
+                                        queries.drone_use(mydb.dbname,
+                                                          nfcid))
                                 insert += 1
                                 print "\033[1;32m{0}\033[0m update last_use date".format(nfcid)
 
-                        print "# of batteries to be used: {0}".format(insert)
+                        print "# of items to be used: {0}".format(insert)
                         break
                 else:
                     print "\033[2;32m(Ready to scan an other tag)\033[0m\n"
@@ -142,8 +205,9 @@ def main(args):
                     if sys.stdin.readline().strip() == END_INPUT:
                         # execute queries
                         for nfcid in nfcids:
-                            if not db.check_if_battery_exists(mydb,
-                                                              nfcid):
+                            if not db.check_if_nfcid_exists(mydb,
+                                                            queries.BATTERY_TNAME,
+                                                            nfcid):
                                 print "\033[1;33m{0}\033[0m is not associated with a battery in the database. Skip.".format(
                                     nfcid)
                             else:
@@ -162,31 +226,70 @@ def main(args):
 
         elif (choice == 5):
             # next tag is registers in the db, except if it is already known.
-            print "Scan the battery to be inserted:"
+            print "Scan the tag to be inserted:"
             acr_dev.wait_for_tag();
 
-            res = mydb.execute(
-                queries.get_battery_nfcid(mydb.dbname,
-                                          acr_dev.last_nfcid),
+            res_b = mydb.execute(
+                queries.get_by_nfcid(mydb.dbname,
+                                     queries.BATTERY_TNAME,
+                                     acr_dev.last_nfcid),
                 True)
 
-            if not res:
+            res_d = mydb.execute(
+                queries.get_by_nfcid(mydb.dbname,
+                                     queries.DRONE_TNAME,
+                                     acr_dev.last_nfcid),
+                True)
+
+            if not res_b and not res_d:
                 print "\nNFCID: \033[1;32m{0}\033[0m\n".format(acr_dev.last_nfcid)
-                print "\nEnter a comment for the current battery:"
+
+                # Check the object type
+                while True:
+                    print "Battery (1) or Drone (2) ?"
+                    obj_type = raw_input()
+                    if obj_type == "1" or obj_type == "2":
+                        break
+                    print "\033[1;31m{0}: invalid choice, 1 or 2 expected\033[0m".format(obj_type)
+
+                print "\nEnter a comment:"
                 comment = raw_input()
 
-                res = mydb.execute(
-                    queries.insert_battery(mydb.dbname,
-                                           acr_dev.last_nfcid,
-                                           comment))
-                print "\033[1;32mBattery inserted\033[0m"
+                if obj_type == "1":
+                    res = mydb.execute(
+                        queries.table_insert(mydb.dbname,
+                                             queries.BATTERY_TNAME,
+                                             acr_dev.last_nfcid,
+                                             comment))
+                    print "\033[1;32mBattery inserted\033[0m"
+                else:
+                    res = mydb.execute(
+                        queries.table_insert(mydb.dbname,
+                                             queries.DRONE_TNAME,
+                                             acr_dev.last_nfcid,
+                                             comment))
+                    print "\033[1;32mDrone inserted\033[0m"
+
             else:
                 print "\nNFCID: \033[1;31m{0}\033[0m\n".format(acr_dev.last_nfcid)
-                print "Battery already inserted:\n"
-                cols = mydb.execute(
-                    queries.get_columns_name(mydb.dbname), True)
-
-                cli.print_battery_list([c[0] for c in cols], res)
+                if res_b:
+                    print "Battery already inserted:\n"
+                    cols = mydb.execute(
+                        queries.table_columns_name(mydb.dbname,
+                                                   queries.BATTERY_TNAME),
+                        True)
+                    cli.print_list(queries.BATTERY_TNAME,
+                                   [c[0] for c in cols],
+                                   res_b)
+                else:
+                    print "Drone already inserted:\n"
+                    cols = mydb.execute(
+                        queries.table_columns_name(mydb.dbname,
+                                                   queries.DRONE_TNAME),
+                        True)
+                    cli.print_list(queries.DRONE_TNAME,
+                                   [c[0] for c in cols],
+                                   res_d)
 
         elif (choice == 6):
             mydb.close()
