@@ -1,6 +1,13 @@
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly
 
+# Check for input venv path.
+if [ $# -eq 0 ]
+  then
+    echo "No arguments supplied, usage: source bin/activate <venv_path>"
+    return
+fi
+
 deactivate () {
     unset -f pydoc >/dev/null 2>&1
 
@@ -40,7 +47,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/home/glihm/projects/upwork/michael_mauer/nfc_db_inventory_cli/py2_nfcdbi"
+VIRTUAL_ENV="$1"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
